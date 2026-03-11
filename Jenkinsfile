@@ -21,7 +21,7 @@ pipeline {
                 script {
                     // Use Windows 'del' and 'rd' commands via 'bat'
                     // We wrap the path in double quotes in case there are spaces in the folder name
-                    
+                    bat 'net stop "Tomcat10.1"'
                     // Remove existing WAR
                     bat "if exist \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\" del /f /q \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\""
                     
@@ -31,6 +31,7 @@ pipeline {
                     
                     // Copy new WAR using 'copy' command
                     bat "copy /y target\\*.war \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\""
+                    bat 'net start "Tomcat10.1"'
                 }
             }
         }
