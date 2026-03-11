@@ -2,16 +2,14 @@ pipeline {
     agent any
 
     environment {
-        // 1. Use double backslashes (\\) or forward slashes (/) for Windows paths
-        // 2. Put the path in single quotes to avoid interpolation issues
         TOMCAT_WEBAPPS = 'C:/Program Files/Apache Software Foundation/Tomcat 10.1/webapps'
         WAR_NAME = "myapp.war" 
+        SERVICE_NAME = "Tomcat10"
     }
 
     stages {
         stage('Build') {
             steps {
-                // Use 'bat' instead of 'sh' for Windows
                 bat 'mvnw.cmd clean package -DskipTests'
             }
         }
@@ -19,19 +17,22 @@ pipeline {
         stage('Deploy Locally') {
             steps {
                 script {
-                    // Use Windows 'del' and 'rd' commands via 'bat'
-                    // We wrap the path in double quotes in case there are spaces in the folder name
-                    bat 'net stop "Tomcat10"'
-                    // Remove existing WAR
-                    bat "if exist \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\" del /f /q \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\""
-                    
-                    // Remove exploded folder (the name of the WAR without .war)
                     def folderName = WAR_NAME.replace('.war', '')
+
+                    // 1. Stop Tomcat. The "|| ver > nul" trick tells Jenkins: 
+                    // "If stopping fails (because it's already stopped), just keep going."
+                    bat "net stop \"${SERVICE_NAME}\" || ver > nul"
+
+                    // 2. Clean old files from webapps
+                    bat "if exist \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\" del /f /q \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\""
                     bat "if exist \"${TOMCAT_WEBAPPS}\\${folderName}\" rd /s /q \"${TOMCAT_WEBAPPS}\\${folderName}\""
-                    
-                    // Copy new WAR using 'copy' command
+
+                    // 3. Copy the WAR. 
+                    // Using target\\*.war ensures it finds your file regardless of the version name.
                     bat "copy /y target\\*.war \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\""
-                    bat 'net start "Tomcat10"'
+
+                    // 4. Start Tomcat
+                    bat "net start \"${SERVICE_NAME}\""
                 }
             }
         }
