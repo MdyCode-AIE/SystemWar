@@ -12,7 +12,7 @@ pipeline {
         stage('Build') {
             steps {
                 // Use 'bat' instead of 'sh' for Windows
-                bat 'mvn clean package -DskipTests'
+                bat 'mvnw.cmd clean package -DskipTests'
             }
         }
 
