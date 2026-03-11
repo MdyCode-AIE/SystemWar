@@ -16,35 +16,33 @@ pipeline {
             }
         }
 
-        stage('Deploy Locally') {
-            steps {
-                script {
-                    def folderName = WAR_NAME.replace('.war', '')
+    stage('Deploy Locally') {
+    steps {
+        script {
+            // 1. Ensure the build actually finished and the file is stable
+            sleep 3 
+            
+            // 2. Stop Tomcat and WAIT for it to fully release files
+            echo "Stopping Tomcat..."
+            bat "net stop \"${SERVICE_NAME}\" /y || ver > nul"
+            sleep 5
 
-                    // Create temp directory if it doesn't exist
-                    bat "if not exist \"${TEMP_STAGING}\" mkdir \"${TEMP_STAGING}\""
+            // 3. Delete old app folder (IMPORTANT: sometimes Windows holds the folder)
+            def folderPath = "${TOMCAT_WEBAPPS}\\myapp"
+            bat "if exist \"${folderPath}\" rd /s /q \"${folderPath}\""
+            bat "if exist \"${TOMCAT_WEBAPPS}\\myapp.war\" del /f /q \"${TOMCAT_WEBAPPS}\\myapp.war\""
 
-                    // 1. Stop Tomcat (Force success even if already stopped)
-                    echo "Stopping Tomcat..."
-                    bat "net stop \"${SERVICE_NAME}\" /y || ver > nul"
+            // 4. Copy to Temp first, then move
+            echo "Moving WAR to Tomcat..."
+            bat "copy /y target\\*.war \"C:\\temp\\myapp.war\""
+            
+            // This 'move' is the only thing Tomcat will ever see
+            bat "move /y \"C:\\temp\\myapp.war\" \"${TOMCAT_WEBAPPS}\\myapp.war\""
 
-                    // 2. Clean up old files
-                    echo "Cleaning webapps folder..."
-                    bat "if exist \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\" del /f /q \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\""
-                    bat "if exist \"${TOMCAT_WEBAPPS}\\${folderName}\" rd /s /q \"${TOMCAT_WEBAPPS}\\${folderName}\""
-
-                    // 3. The "Two-Step" Copy (The Secret Fix)
-                    echo "Deploying WAR..."
-                    // First, copy to temp (Tomcat can't see this)
-                    bat "copy /y target\\*.war \"${TEMP_STAGING}\\${WAR_NAME}\""
-                    // Second, move to webapps (This is instant/atomic)
-                    bat "move /y \"${TEMP_STAGING}\\${WAR_NAME}\" \"${TOMCAT_WEBAPPS}\\${WAR_NAME}\""
-
-                    // 4. Start Tomcat
-                    echo "Starting Tomcat..."
-                    bat "net start \"${SERVICE_NAME}\""
-                }
-            }
+            // 5. Start Tomcat
+            bat "net start \"${SERVICE_NAME}\""
         }
+    }
+    }
     }
 }
