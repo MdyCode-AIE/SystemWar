@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<h2>My Leave Requests</h2>
+<a th:href="@{/request/new}">Create New Request</a>
+<table border="1">
+    <tr><th>Type</th><th>Start</th><th>End</th><th>Status</th></tr>
+    <tr th:each="req : ${requests}">
+        <td th:text="${req.leaveType.name}"></td>
+        <td th:text="${req.startDate}"></td>
+        <td th:text="${req.endDate}"></td>
+        <td th:text="${req.status}"></td>
+    </tr>
+</table>
+<form th:action="@{/logout}" method="post"><button>Logout</button></form>
+</body>
+</html>

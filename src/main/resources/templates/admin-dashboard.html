@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<h2>Admin Dashboard - All Requests</h2>
+<table border="1">
+    <tr><th>User</th><th>Type</th><th>Dates</th><th>Status</th><th>Action</th></tr>
+    <tr th:each="req : ${allRequests}">
+        <td th:text="${req.user.username}"></td>
+        <td th:text="${req.leaveType.name}"></td>
+        <td th:text="${req.startDate + ' to ' + req.endDate}"></td>
+        <td th:text="${req.status}"></td>
+        <td>
+            <form th:if="${req.status.name() == 'PENDING'}" th:action="@{/admin/request/{id}/status(id=${req.id})}" method="post">
+                <input type="hidden" name="status" value="APPROVED"/>
+                <button type="submit">Approve</button>
+            </form>
+            <form th:if="${req.status.name() == 'PENDING'}" th:action="@{/admin/request/{id}/status(id=${req.id})}" method="post">
+                <input type="hidden" name="status" value="REJECTED"/>
+                <button type="submit">Reject</button>
+            </form>
+        </td>
+    </tr>
+</table>
+<form th:action="@{/logout}" method="post"><button>Logout</button></form>
+</body>
+</html>
