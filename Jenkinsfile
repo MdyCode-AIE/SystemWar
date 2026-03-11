@@ -12,7 +12,10 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                powershell './mvnw clean package -DskipTests'
+                powershell """
+                    \$env:JAVA_HOME = '${env.JAVA_HOME}'
+                    ./mvnw clean package -DskipTests
+                """
             }
         }
 
